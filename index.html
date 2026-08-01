@@ -13,10 +13,16 @@
             --accent: #d4af37; 
             --accent-hover: #b38b22;
             --error: #cf6679;
+            --success: #4caf50;
         }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; }
         .container { max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.1); }
-        .brand { text-align: center; font-size: 1.8rem; font-weight: 600; letter-spacing: 2px; color: var(--accent); margin-bottom: 25px; }
+        
+        /* Updated Header with Developer Signature */
+        .brand-header { text-align: center; margin-bottom: 25px; }
+        .brand-title { font-size: 1.8rem; font-weight: 600; letter-spacing: 2px; color: var(--accent); margin: 0; }
+        .dev-sig { font-size: 0.65rem; color: #888; font-weight: 300; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+        
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #bbb; }
         input, textarea { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
@@ -24,17 +30,28 @@
         .btn { background-color: var(--accent); color: var(--bg-dark); border: none; padding: 15px; font-size: 1.1rem; border-radius: 8px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn:active { background-color: var(--accent-hover); }
         .btn:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+        
         .pairing-box { display: none; background: #2a2a2a; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; border: 1px dashed var(--accent); }
         .code-display { font-size: 2rem; font-weight: 600; letter-spacing: 5px; color: var(--accent); margin: 10px 0; }
         .status { text-align: center; margin-top: 15px; font-size: 0.9rem; }
         .error-text { color: var(--error); }
-        .footer-sig { text-align: center; margin-top: 30px; font-size: 0.8rem; color: #666; }
+
+        /* LIVE PROGRESS BAR STYLING */
+        .progress-container { display: none; background: #252525; padding: 20px; border-radius: 8px; margin-top: 25px; border: 1px solid #333; }
+        .progress-track { background: #444; border-radius: 5px; height: 15px; width: 100%; overflow: hidden; margin-top: 10px; margin-bottom: 15px; }
+        .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.5s ease-in-out; }
+        .progress-stats { display: flex; justify-content: space-between; font-size: 0.85rem; color: #bbb; }
+        .current-number { text-align: center; font-size: 0.8rem; color: #888; margin-top: 10px; font-style: italic; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="brand">BADOZA ENGINE</div>
+        <!-- Developer Signature moved to the Header -->
+        <div class="brand-header">
+            <h1 class="brand-title">BADOZA ENGINE</h1>
+            <div class="dev-sig">Developed by Kunal Dongare</div>
+        </div>
         
         <div class="form-group">
             <label>🔐 License Key</label>
@@ -56,15 +73,14 @@
 
         <hr style="border-color: #333; margin: 25px 0;">
 
-        <!-- NEW: SMART CONTACT EXTRACTOR -->
         <div class="form-group" style="background: #252525; padding: 15px; border-radius: 8px;">
             <label>📇 Auto-Load 500+ Contacts</label>
-            <p style="font-size: 0.75rem; color: #888; margin-top:0;">Export your phone contacts to a .vcf or .csv file and select it here to automatically extract the numbers.</p>
+            <p style="font-size: 0.75rem; color: #888; margin-top:0;">Select a .vcf or .csv file to automatically extract the numbers.</p>
             <input type="file" id="contactFile" accept=".vcf, .csv, .txt" onchange="extractNumbers(event)" style="padding: 8px;">
         </div>
 
         <div class="form-group">
-            <label>📋 Target Numbers (Comma separated)</label>
+            <label>📋 Target Numbers</label>
             <textarea id="targetNumbers" rows="4" placeholder="91987..., 91888..."></textarea>
         </div>
 
@@ -73,7 +89,6 @@
             <textarea id="messageText" rows="3" placeholder="Type your promotion here..."></textarea>
         </div>
 
-        <!-- NEW: MULTIPLE IMAGE UPLOAD -->
         <div class="form-group">
             <label>🖼️ Upload Catalog Images (Select up to 30 photos)</label>
             <input type="file" id="imageFiles" accept="image/png, image/jpeg" multiple>
@@ -82,37 +97,45 @@
         <button class="btn" id="startBtn" onclick="startCampaign()" disabled>2. Start Campaign</button>
 
         <div class="status" id="statusMsg"></div>
-        
-        <div class="footer-sig">
-            Developed by Kunal Dongare
+
+        <!-- NEW: LIVE PROGRESS DASHBOARD -->
+        <div class="progress-container" id="progressUI">
+            <div style="text-align: center; font-weight: 600; color: var(--accent);">LIVE CAMPAIGN STATUS</div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+            <div class="progress-stats">
+                <span id="progCount">0 / 0 Messages</span>
+                <span id="progPercent">0%</span>
+            </div>
+            <div class="progress-stats" style="margin-top: 10px;">
+                <span>✅ Success: <strong id="progSuccess" style="color: var(--success);">0</strong></span>
+                <span>❌ Failed: <strong id="progFailed" style="color: var(--error);">0</strong></span>
+            </div>
+            <div class="current-number" id="progCurrentNum">Awaiting first number...</div>
         </div>
+
     </div>
 
     <script>
         // REPLACE THE URL BELOW WITH YOUR ACTUAL RENDER.COM URL
         const SERVER_URL = 'https://YOUR-RENDER-URL.onrender.com'; 
+        
+        let pollingInterval = null;
 
-        // SMART CONTACT EXTRACTOR LOGIC
         function extractNumbers(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
-                // Find anything that looks like a phone number in the file
                 let rawNumbers = text.match(/\+?\d{10,15}/g) || [];
-                
-                // Clean them up: remove '+', and add '91' to numbers that are exactly 10 digits
                 let cleaned = rawNumbers.map(n => {
                     let num = n.replace(/\D/g, '');
                     if (num.length === 10) return '91' + num;
                     return num;
                 });
-
-                // Remove duplicates
                 cleaned = [...new Set(cleaned)];
-                
                 if (cleaned.length > 0) {
                     document.getElementById('targetNumbers').value = cleaned.join(', ');
                     alert(`✅ Successfully extracted ${cleaned.length} unique numbers!`);
@@ -135,7 +158,7 @@
 
             document.getElementById('pairBtn').innerText = "Generating...";
             document.getElementById('pairBtn').disabled = true;
-            status.innerHTML = "Waking up server (this takes 10-15 seconds)...";
+            status.innerHTML = "Waking up server...";
 
             try {
                 const response = await fetch(`${SERVER_URL}/api/get-code`, {
@@ -167,8 +190,6 @@
             const key = document.getElementById('licenseKey').value;
             const numbers = document.getElementById('targetNumbers').value;
             const message = document.getElementById('messageText').value;
-            
-            // Get multiple files from the input
             const imageFiles = document.getElementById('imageFiles').files; 
             const status = document.getElementById('statusMsg');
 
@@ -177,14 +198,12 @@
                 return;
             }
 
-            document.getElementById('startBtn').innerText = "Starting Engine...";
+            document.getElementById('startBtn').innerText = "Engine Running...";
             document.getElementById('startBtn').disabled = true;
 
             const formData = new FormData();
             formData.append('numbers', numbers);
             formData.append('message', message);
-            
-            // Loop through all selected images and append them to the payload
             for(let i = 0; i < imageFiles.length; i++) {
                 formData.append('catalogImages', imageFiles[i]);
             }
@@ -200,15 +219,66 @@
 
                 if (response.ok) {
                     status.innerHTML = `<span style="color: var(--accent); font-weight: bold;">${data.status}</span>`;
+                    
+                    // Reveal the tracker and start polling
+                    document.getElementById('progressUI').style.display = 'block';
+                    startTracking(key);
+
                 } else {
                     status.innerHTML = `<span class="error-text">${data.error}</span>`;
                     document.getElementById('startBtn').disabled = false;
+                    document.getElementById('startBtn').innerText = "2. Start Campaign";
                 }
             } catch (err) {
                 status.innerHTML = '<span class="error-text">Failed to start campaign.</span>';
                 document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').innerText = "2. Start Campaign";
             }
-            document.getElementById('startBtn').innerText = "2. Start Campaign";
+        }
+
+        // ==========================================
+        // 📡 NEW: AUTOMATIC STATUS POLLING
+        // ==========================================
+        function startTracking(licenseKey) {
+            // Stop any existing intervals just in case
+            if (pollingInterval) clearInterval(pollingInterval);
+
+            // Fetch the status from the server every 2 seconds
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${SERVER_URL}/api/status`, {
+                        method: 'GET',
+                        headers: { 'x-license-key': licenseKey }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Update UI text
+                    document.getElementById('progCount').innerText = `${data.current} / ${data.total} Messages`;
+                    document.getElementById('progSuccess').innerText = data.success;
+                    document.getElementById('progFailed').innerText = data.failed;
+                    document.getElementById('progCurrentNum').innerText = `Last processed: ${data.lastNumberProcessed || 'Starting up...'}`;
+                    
+                    // Animate the bar
+                    let percentage = 0;
+                    if (data.total > 0) {
+                        percentage = Math.round((data.current / data.total) * 100);
+                    }
+                    document.getElementById('progressBar').style.width = `${percentage}%`;
+                    document.getElementById('progPercent').innerText = `${percentage}%`;
+
+                    // Stop checking once the campaign is marked completed
+                    if (data.status === 'completed') {
+                        clearInterval(pollingInterval);
+                        document.getElementById('progCurrentNum').innerText = '🎉 Campaign Finished!';
+                        document.getElementById('startBtn').innerText = "2. Start New Campaign";
+                        document.getElementById('startBtn').disabled = false;
+                    }
+
+                } catch (error) {
+                    console.log("Tracker ping missed, retrying next cycle...");
+                }
+            }, 2000); 
         }
     </script>
 </body>
