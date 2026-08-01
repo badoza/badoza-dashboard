@@ -14,95 +14,21 @@
             --accent-hover: #b38b22;
             --error: #cf6679;
         }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid rgba(212, 175, 55, 0.1);
-        }
-
-        .brand {
-            text-align: center;
-            font-size: 1.8rem;
-            font-weight: 600;
-            letter-spacing: 2px;
-            color: var(--accent);
-            margin-bottom: 25px;
-        }
-
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.1); }
+        .brand { text-align: center; font-size: 1.8rem; font-weight: 600; letter-spacing: 2px; color: var(--accent); margin-bottom: 25px; }
         .form-group { margin-bottom: 20px; }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: #bbb;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            color: white;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .btn {
-            background-color: var(--accent);
-            color: var(--bg-dark);
-            border: none;
-            padding: 15px;
-            font-size: 1.1rem;
-            border-radius: 8px;
-            width: 100%;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
+        label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #bbb; }
+        input, textarea { width: 100%; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        .btn { background-color: var(--accent); color: var(--bg-dark); border: none; padding: 15px; font-size: 1.1rem; border-radius: 8px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn:active { background-color: var(--accent-hover); }
         .btn:disabled { background-color: #555; color: #888; cursor: not-allowed; }
-
-        .pairing-box {
-            display: none;
-            background: #2a2a2a;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 20px;
-            border: 1px dashed var(--accent);
-        }
-
-        .code-display {
-            font-size: 2rem;
-            font-weight: 600;
-            letter-spacing: 5px;
-            color: var(--accent);
-            margin: 10px 0;
-        }
-
+        .pairing-box { display: none; background: #2a2a2a; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; border: 1px dashed var(--accent); }
+        .code-display { font-size: 2rem; font-weight: 600; letter-spacing: 5px; color: var(--accent); margin: 10px 0; }
         .status { text-align: center; margin-top: 15px; font-size: 0.9rem; }
         .error-text { color: var(--error); }
+        .footer-sig { text-align: center; margin-top: 30px; font-size: 0.8rem; color: #666; }
     </style>
 </head>
 <body>
@@ -130,9 +56,16 @@
 
         <hr style="border-color: #333; margin: 25px 0;">
 
+        <!-- NEW: SMART CONTACT EXTRACTOR -->
+        <div class="form-group" style="background: #252525; padding: 15px; border-radius: 8px;">
+            <label>📇 Auto-Load 500+ Contacts</label>
+            <p style="font-size: 0.75rem; color: #888; margin-top:0;">Export your phone contacts to a .vcf or .csv file and select it here to automatically extract the numbers.</p>
+            <input type="file" id="contactFile" accept=".vcf, .csv, .txt" onchange="extractNumbers(event)" style="padding: 8px;">
+        </div>
+
         <div class="form-group">
             <label>📋 Target Numbers (Comma separated)</label>
-            <textarea id="targetNumbers" rows="3" placeholder="91987..., 91888..."></textarea>
+            <textarea id="targetNumbers" rows="4" placeholder="91987..., 91888..."></textarea>
         </div>
 
         <div class="form-group">
@@ -140,19 +73,55 @@
             <textarea id="messageText" rows="3" placeholder="Type your promotion here..."></textarea>
         </div>
 
+        <!-- NEW: MULTIPLE IMAGE UPLOAD -->
         <div class="form-group">
-            <label>🖼️ Upload Catalog Image</label>
-            <input type="file" id="imageFile" accept="image/png, image/jpeg">
+            <label>🖼️ Upload Catalog Images (Select up to 30 photos)</label>
+            <input type="file" id="imageFiles" accept="image/png, image/jpeg" multiple>
         </div>
 
         <button class="btn" id="startBtn" onclick="startCampaign()" disabled>2. Start Campaign</button>
 
         <div class="status" id="statusMsg"></div>
+        
+        <div class="footer-sig">
+            Developed by Kunal Dongare
+        </div>
     </div>
 
     <script>
         // REPLACE THE URL BELOW WITH YOUR ACTUAL RENDER.COM URL
-        const SERVER_URL = 'https://badoza-api.onrender.com'; 
+        const SERVER_URL = 'https://YOUR-RENDER-URL.onrender.com'; 
+
+        // SMART CONTACT EXTRACTOR LOGIC
+        function extractNumbers(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                // Find anything that looks like a phone number in the file
+                let rawNumbers = text.match(/\+?\d{10,15}/g) || [];
+                
+                // Clean them up: remove '+', and add '91' to numbers that are exactly 10 digits
+                let cleaned = rawNumbers.map(n => {
+                    let num = n.replace(/\D/g, '');
+                    if (num.length === 10) return '91' + num;
+                    return num;
+                });
+
+                // Remove duplicates
+                cleaned = [...new Set(cleaned)];
+                
+                if (cleaned.length > 0) {
+                    document.getElementById('targetNumbers').value = cleaned.join(', ');
+                    alert(`✅ Successfully extracted ${cleaned.length} unique numbers!`);
+                } else {
+                    alert('❌ No valid phone numbers found in the file.');
+                }
+            };
+            reader.readAsText(file);
+        }
 
         async function getPairingCode() {
             const key = document.getElementById('licenseKey').value;
@@ -166,15 +135,12 @@
 
             document.getElementById('pairBtn').innerText = "Generating...";
             document.getElementById('pairBtn').disabled = true;
-            status.innerHTML = "Waking up server (this takes 10-15 seconds on free cloud plans)...";
+            status.innerHTML = "Waking up server (this takes 10-15 seconds)...";
 
             try {
                 const response = await fetch(`${SERVER_URL}/api/get-code`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-license-key': key 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-license-key': key },
                     body: JSON.stringify({ phoneNumber: phone })
                 });
 
@@ -201,7 +167,9 @@
             const key = document.getElementById('licenseKey').value;
             const numbers = document.getElementById('targetNumbers').value;
             const message = document.getElementById('messageText').value;
-            const imageFile = document.getElementById('imageFile').files[0];
+            
+            // Get multiple files from the input
+            const imageFiles = document.getElementById('imageFiles').files; 
             const status = document.getElementById('statusMsg');
 
             if(!numbers) {
@@ -215,7 +183,11 @@
             const formData = new FormData();
             formData.append('numbers', numbers);
             formData.append('message', message);
-            if (imageFile) formData.append('catalogImage', imageFile);
+            
+            // Loop through all selected images and append them to the payload
+            for(let i = 0; i < imageFiles.length; i++) {
+                formData.append('catalogImages', imageFiles[i]);
+            }
 
             try {
                 const response = await fetch(`${SERVER_URL}/api/send-bulk`, {
