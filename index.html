@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BADOZA | Bulk Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #f5f5f5;
+            --accent: #d4af37; 
+            --accent-hover: #b38b22;
+            --error: #cf6679;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .brand {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 25px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: var(--bg-dark);
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:active { background-color: var(--accent-hover); }
+        .btn:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+
+        .pairing-box {
+            display: none;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px dashed var(--accent);
+        }
+
+        .code-display {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: 5px;
+            color: var(--accent);
+            margin: 10px 0;
+        }
+
+        .status { text-align: center; margin-top: 15px; font-size: 0.9rem; }
+        .error-text { color: var(--error); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="brand">BADOZA ENGINE</div>
+        
+        <div class="form-group">
+            <label>🔐 License Key</label>
+            <input type="password" id="licenseKey" placeholder="Enter your authorized key">
+        </div>
+
+        <div class="form-group">
+            <label>📱 Your WhatsApp Number (Include Country Code)</label>
+            <input type="number" id="senderNumber" placeholder="91XXXXXXXXXX">
+        </div>
+
+        <button class="btn" id="pairBtn" onclick="getPairingCode()">1. Get Linking Code</button>
+
+        <div class="pairing-box" id="pairingBox">
+            <p>Copy this code. Open WhatsApp -> Linked Devices -> Link with Phone Number.</p>
+            <div class="code-display" id="codeDisplay">--------</div>
+            <p style="font-size: 0.8rem; color: #888;">Wait 10 seconds after linking before starting the campaign.</p>
+        </div>
+
+        <hr style="border-color: #333; margin: 25px 0;">
+
+        <div class="form-group">
+            <label>📋 Target Numbers (Comma separated)</label>
+            <textarea id="targetNumbers" rows="3" placeholder="91987..., 91888..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>💬 Message Caption</label>
+            <textarea id="messageText" rows="3" placeholder="Type your promotion here..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>🖼️ Upload Catalog Image</label>
+            <input type="file" id="imageFile" accept="image/png, image/jpeg">
+        </div>
+
+        <button class="btn" id="startBtn" onclick="startCampaign()" disabled>2. Start Campaign</button>
+
+        <div class="status" id="statusMsg"></div>
+    </div>
+
+    <script>
+        // REPLACE THE URL BELOW WITH YOUR ACTUAL RENDER.COM URL
+        const SERVER_URL = 'https://badoza-api.onrender.com'; 
+
+        async function getPairingCode() {
+            const key = document.getElementById('licenseKey').value;
+            const phone = document.getElementById('senderNumber').value;
+            const status = document.getElementById('statusMsg');
+
+            if(!key || !phone) {
+                status.innerHTML = '<span class="error-text">Please enter License Key and Phone Number.</span>';
+                return;
+            }
+
+            document.getElementById('pairBtn').innerText = "Generating...";
+            document.getElementById('pairBtn').disabled = true;
+            status.innerHTML = "Waking up server (this takes 10-15 seconds on free cloud plans)...";
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/get-code`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-license-key': key 
+                    },
+                    body: JSON.stringify({ phoneNumber: phone })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('pairingBox').style.display = 'block';
+                    const formattedCode = data.code.match(/.{1,4}/g).join('-');
+                    document.getElementById('codeDisplay').innerText = formattedCode;
+                    document.getElementById('startBtn').disabled = false;
+                    status.innerHTML = "";
+                } else {
+                    status.innerHTML = `<span class="error-text">${data.error}</span>`;
+                    document.getElementById('pairBtn').disabled = false;
+                }
+            } catch (err) {
+                status.innerHTML = '<span class="error-text">Server connection failed. Ensure Render is running.</span>';
+                document.getElementById('pairBtn').disabled = false;
+            }
+            document.getElementById('pairBtn').innerText = "1. Get Linking Code";
+        }
+
+        async function startCampaign() {
+            const key = document.getElementById('licenseKey').value;
+            const numbers = document.getElementById('targetNumbers').value;
+            const message = document.getElementById('messageText').value;
+            const imageFile = document.getElementById('imageFile').files[0];
+            const status = document.getElementById('statusMsg');
+
+            if(!numbers) {
+                status.innerHTML = '<span class="error-text">Target numbers are required.</span>';
+                return;
+            }
+
+            document.getElementById('startBtn').innerText = "Starting Engine...";
+            document.getElementById('startBtn').disabled = true;
+
+            const formData = new FormData();
+            formData.append('numbers', numbers);
+            formData.append('message', message);
+            if (imageFile) formData.append('catalogImage', imageFile);
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/send-bulk`, {
+                    method: 'POST',
+                    headers: { 'x-license-key': key },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    status.innerHTML = `<span style="color: var(--accent); font-weight: bold;">${data.status}</span>`;
+                } else {
+                    status.innerHTML = `<span class="error-text">${data.error}</span>`;
+                    document.getElementById('startBtn').disabled = false;
+                }
+            } catch (err) {
+                status.innerHTML = '<span class="error-text">Failed to start campaign.</span>';
+                document.getElementById('startBtn').disabled = false;
+            }
+            document.getElementById('startBtn').innerText = "2. Start Campaign";
+        }
+    </script>
+</body>
+</html>
