@@ -72,7 +72,6 @@
 
         <hr style="border-color: #333; margin: 25px 0;">
 
-        <!-- SMART CONTACT SYNC SECTION -->
         <div class="form-group" style="background: #252525; padding: 15px; border-radius: 8px;">
             <label>📇 Smart Contact Import</label>
             <p style="font-size: 0.75rem; color: #888; margin-top:0;">Sync directly from your phone's address book, or upload a bulk file.</p>
@@ -120,18 +119,14 @@
             </div>
             <div class="current-number" id="progCurrentNum">Awaiting first number...</div>
         </div>
-
     </div>
 
     <script>
-        // REPLACE THE URL BELOW WITH YOUR ACTUAL RENDER.COM URL
+        // ✅ EXACT RENDER URL WITH NO TRAILING SLASH
         const SERVER_URL = 'https://badoza-api.onrender.com'; 
         
         let pollingInterval = null;
 
-        // ==========================================
-        // 📲 NATIVE PHONE DIRECTORY SYNC (Web Contact Picker)
-        // ==========================================
         async function openContactPicker() {
             const supported = ('contacts' in navigator && 'ContactsManager' in window);
             
@@ -147,18 +142,17 @@
                 
                 let extracted = [];
                 
-                // Format the numbers pulled from the phone book
                 contacts.forEach(contact => {
                     if (contact.tel && contact.tel.length > 0) {
                         contact.tel.forEach(t => {
-                            let num = t.replace(/\D/g, ''); // Remove spaces, dashes, plus signs
-                            if (num.length === 10) num = '91' + num; // Auto-add India country code if missing
+                            let num = t.replace(/\D/g, ''); 
+                            if (num.length === 10) num = '91' + num; 
                             if (num.length >= 10) extracted.push(num);
                         });
                     }
                 });
                 
-                extracted = [...new Set(extracted)]; // Remove duplicates
+                extracted = [...new Set(extracted)]; 
                 
                 if (extracted.length > 0) {
                     const currentVal = document.getElementById('targetNumbers').value;
@@ -173,9 +167,6 @@
             }
         }
 
-        // ==========================================
-        // 📇 BULK FILE EXTRACTOR (.CSV / .VCF)
-        // ==========================================
         function extractNumbers(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -213,7 +204,7 @@
 
             document.getElementById('pairBtn').innerText = "Generating...";
             document.getElementById('pairBtn').disabled = true;
-            status.innerHTML = "Waking up server...";
+            status.innerHTML = "Waking up server (this takes 10-15 seconds)...";
 
             try {
                 const response = await fetch(`${SERVER_URL}/api/get-code`, {
