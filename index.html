@@ -18,7 +18,6 @@
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; }
         .container { max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(212, 175, 55, 0.1); }
         
-        /* Updated Header with Developer Signature */
         .brand-header { text-align: center; margin-bottom: 25px; }
         .brand-title { font-size: 1.8rem; font-weight: 600; letter-spacing: 2px; color: var(--accent); margin: 0; }
         .dev-sig { font-size: 0.65rem; color: #888; font-weight: 300; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
@@ -30,13 +29,14 @@
         .btn { background-color: var(--accent); color: var(--bg-dark); border: none; padding: 15px; font-size: 1.1rem; border-radius: 8px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn:active { background-color: var(--accent-hover); }
         .btn:disabled { background-color: #555; color: #888; cursor: not-allowed; }
+        .btn-secondary { background-color: #333; color: var(--text-main); border: 1px solid #555; padding: 10px; font-size: 0.9rem; margin-bottom: 10px; }
+        .btn-secondary:active { background-color: #444; }
         
         .pairing-box { display: none; background: #2a2a2a; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; border: 1px dashed var(--accent); }
         .code-display { font-size: 2rem; font-weight: 600; letter-spacing: 5px; color: var(--accent); margin: 10px 0; }
         .status { text-align: center; margin-top: 15px; font-size: 0.9rem; }
         .error-text { color: var(--error); }
 
-        /* LIVE PROGRESS BAR STYLING */
         .progress-container { display: none; background: #252525; padding: 20px; border-radius: 8px; margin-top: 25px; border: 1px solid #333; }
         .progress-track { background: #444; border-radius: 5px; height: 15px; width: 100%; overflow: hidden; margin-top: 10px; margin-bottom: 15px; }
         .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.5s ease-in-out; }
@@ -47,7 +47,6 @@
 <body>
 
     <div class="container">
-        <!-- Developer Signature moved to the Header -->
         <div class="brand-header">
             <h1 class="brand-title">BADOZA ENGINE</h1>
             <div class="dev-sig">Developed by Kunal Dongare</div>
@@ -73,15 +72,23 @@
 
         <hr style="border-color: #333; margin: 25px 0;">
 
+        <!-- SMART CONTACT SYNC SECTION -->
         <div class="form-group" style="background: #252525; padding: 15px; border-radius: 8px;">
-            <label>📇 Auto-Load 500+ Contacts</label>
-            <p style="font-size: 0.75rem; color: #888; margin-top:0;">Select a .vcf or .csv file to automatically extract the numbers.</p>
-            <input type="file" id="contactFile" accept=".vcf, .csv, .txt" onchange="extractNumbers(event)" style="padding: 8px;">
+            <label>📇 Smart Contact Import</label>
+            <p style="font-size: 0.75rem; color: #888; margin-top:0;">Sync directly from your phone's address book, or upload a bulk file.</p>
+            
+            <button class="btn btn-secondary" onclick="openContactPicker()" id="syncBtn">📲 Sync from Phone Book</button>
+            
+            <div style="margin-top: 10px;">
+                <label style="font-size: 0.75rem;">Or upload a .csv / .vcf list:</label>
+                <input type="file" id="contactFile" accept=".vcf, .csv, .txt" onchange="extractNumbers(event)" style="padding: 8px;">
+            </div>
         </div>
 
         <div class="form-group">
-            <label>📋 Target Numbers</label>
-            <textarea id="targetNumbers" rows="4" placeholder="91987..., 91888..."></textarea>
+            <label>📋 Target Numbers (Comma separated)</label>
+            <textarea id="targetNumbers" rows="4" placeholder="Numbers will appear here automatically..."></textarea>
+            <p style="font-size: 0.7rem; color: #888; margin-top: 5px;">You can also manually paste multiple numbers here, separated by commas.</p>
         </div>
 
         <div class="form-group">
@@ -98,7 +105,6 @@
 
         <div class="status" id="statusMsg"></div>
 
-        <!-- NEW: LIVE PROGRESS DASHBOARD -->
         <div class="progress-container" id="progressUI">
             <div style="text-align: center; font-weight: 600; color: var(--accent);">LIVE CAMPAIGN STATUS</div>
             <div class="progress-track">
@@ -119,10 +125,57 @@
 
     <script>
         // REPLACE THE URL BELOW WITH YOUR ACTUAL RENDER.COM URL
-        const SERVER_URL = 'https://YOUR-RENDER-URL.onrender.com'; 
+        const SERVER_URL = 'https://badoza-api.onrender.com'; 
         
         let pollingInterval = null;
 
+        // ==========================================
+        // 📲 NATIVE PHONE DIRECTORY SYNC (Web Contact Picker)
+        // ==========================================
+        async function openContactPicker() {
+            const supported = ('contacts' in navigator && 'ContactsManager' in window);
+            
+            if (!supported) {
+                alert('Your current browser or device does not support direct phone book access. Please use the CSV/VCF upload option instead.');
+                return;
+            }
+
+            try {
+                const props = ['tel'];
+                const opts = { multiple: true };
+                const contacts = await navigator.contacts.select(props, opts);
+                
+                let extracted = [];
+                
+                // Format the numbers pulled from the phone book
+                contacts.forEach(contact => {
+                    if (contact.tel && contact.tel.length > 0) {
+                        contact.tel.forEach(t => {
+                            let num = t.replace(/\D/g, ''); // Remove spaces, dashes, plus signs
+                            if (num.length === 10) num = '91' + num; // Auto-add India country code if missing
+                            if (num.length >= 10) extracted.push(num);
+                        });
+                    }
+                });
+                
+                extracted = [...new Set(extracted)]; // Remove duplicates
+                
+                if (extracted.length > 0) {
+                    const currentVal = document.getElementById('targetNumbers').value;
+                    const newVal = currentVal ? currentVal + ', ' + extracted.join(', ') : extracted.join(', ');
+                    document.getElementById('targetNumbers').value = newVal;
+                    alert(`✅ Successfully synced ${extracted.length} numbers from your phone contacts!`);
+                } else {
+                    alert('No valid phone numbers found in the selected contacts.');
+                }
+            } catch (err) {
+                console.log('User canceled contact selection or an error occurred.', err);
+            }
+        }
+
+        // ==========================================
+        // 📇 BULK FILE EXTRACTOR (.CSV / .VCF)
+        // ==========================================
         function extractNumbers(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -137,8 +190,10 @@
                 });
                 cleaned = [...new Set(cleaned)];
                 if (cleaned.length > 0) {
-                    document.getElementById('targetNumbers').value = cleaned.join(', ');
-                    alert(`✅ Successfully extracted ${cleaned.length} unique numbers!`);
+                    const currentVal = document.getElementById('targetNumbers').value;
+                    const newVal = currentVal ? currentVal + ', ' + cleaned.join(', ') : cleaned.join(', ');
+                    document.getElementById('targetNumbers').value = newVal;
+                    alert(`✅ Successfully extracted ${cleaned.length} unique numbers from the file!`);
                 } else {
                     alert('❌ No valid phone numbers found in the file.');
                 }
@@ -219,11 +274,8 @@
 
                 if (response.ok) {
                     status.innerHTML = `<span style="color: var(--accent); font-weight: bold;">${data.status}</span>`;
-                    
-                    // Reveal the tracker and start polling
                     document.getElementById('progressUI').style.display = 'block';
                     startTracking(key);
-
                 } else {
                     status.innerHTML = `<span class="error-text">${data.error}</span>`;
                     document.getElementById('startBtn').disabled = false;
@@ -236,14 +288,9 @@
             }
         }
 
-        // ==========================================
-        // 📡 NEW: AUTOMATIC STATUS POLLING
-        // ==========================================
         function startTracking(licenseKey) {
-            // Stop any existing intervals just in case
             if (pollingInterval) clearInterval(pollingInterval);
 
-            // Fetch the status from the server every 2 seconds
             pollingInterval = setInterval(async () => {
                 try {
                     const response = await fetch(`${SERVER_URL}/api/status`, {
@@ -253,13 +300,11 @@
                     
                     const data = await response.json();
                     
-                    // Update UI text
                     document.getElementById('progCount').innerText = `${data.current} / ${data.total} Messages`;
                     document.getElementById('progSuccess').innerText = data.success;
                     document.getElementById('progFailed').innerText = data.failed;
                     document.getElementById('progCurrentNum').innerText = `Last processed: ${data.lastNumberProcessed || 'Starting up...'}`;
                     
-                    // Animate the bar
                     let percentage = 0;
                     if (data.total > 0) {
                         percentage = Math.round((data.current / data.total) * 100);
@@ -267,7 +312,6 @@
                     document.getElementById('progressBar').style.width = `${percentage}%`;
                     document.getElementById('progPercent').innerText = `${percentage}%`;
 
-                    // Stop checking once the campaign is marked completed
                     if (data.status === 'completed') {
                         clearInterval(pollingInterval);
                         document.getElementById('progCurrentNum').innerText = '🎉 Campaign Finished!';
